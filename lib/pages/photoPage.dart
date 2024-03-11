@@ -1,3 +1,5 @@
+import 'package:untitled2/pages/imagePage.dart';
+
 import '../services/mediaServices.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,7 @@ class _MediaPickerState extends State<MediaPicker> {
   AssetPathEntity? selectedAlbum;
   List<AssetPathEntity> albumList = [];
   List<AssetEntity> assetList = [];
+  late int _albumCount;
 
   // List<AssetEntity> selectedAssetList = [];
 
@@ -29,24 +32,20 @@ class _MediaPickerState extends State<MediaPicker> {
     super.initState();
   }
 
-  Future<int> getImageCount(AssetPathEntity path) async {
-    int count = await path.assetCountAsync;
-    return count;
-  }
+  // Future<int> getImageCount(AssetPathEntity path) async {
+  //   int count = await path.assetCountAsync;
+  //   return count;
+  // }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
-        title: Text(
-          widget.assetPathEntity.name,
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text(widget.assetPathEntity.name),
         centerTitle: true,
+        // backgroundColor: ColorScheme.onPrimary,
       ),
       body: assetList.isEmpty
           ? const Center(
@@ -70,7 +69,17 @@ class _MediaPickerState extends State<MediaPicker> {
   }
 
   Widget assetWidget(AssetEntity assetEntity) => GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (BuildContext context) => ImagePage(
+                      assetEntity: assetEntity,
+                      albumName: widget.assetPathEntity.name,
+                      assetEntityIndex: assetList.indexOf(assetEntity),
+                      assetPathEntityCount: assetList.length,
+                    )));
+      },
       child: AssetEntityImage(
         assetEntity,
         isOriginal: false,

@@ -37,9 +37,8 @@ class _AlbumPageState extends State<AlbumPage> {
       appBar: AppBar(
         title: const Text(
           'ALBUM',
-          style: TextStyle(color: Colors.white, fontSize: 20, letterSpacing: 2),
+          style: TextStyle(fontSize: 20, letterSpacing: 2),
         ),
-        backgroundColor: Colors.black,
         actions: [
           IconButton(
               onPressed: () {
@@ -54,13 +53,13 @@ class _AlbumPageState extends State<AlbumPage> {
                             title: Text('创建新相册'),
                             subtitle: Text(
                               '在安卓系统值创建一个新相册',
-                              style: TextStyle(color: Colors.black26),
+                              // style: TextStyle(color: Colors.black26),
                             ),
                           ),
                           ListTile(
                             title: Text(
                               '取消',
-                              style: TextStyle(color: Colors.grey[600]),
+                              // style: TextStyle(color: Colors.grey[600]),
                             ),
                             onTap: () {
                               Navigator.pop(context);
@@ -72,10 +71,7 @@ class _AlbumPageState extends State<AlbumPage> {
                   },
                 );
               },
-              icon: const Icon(
-                Icons.add,
-                color: Colors.white,
-              )),
+              icon: const Icon(Icons.add)),
         ],
         centerTitle: true,
       ),
