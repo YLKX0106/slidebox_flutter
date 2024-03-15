@@ -36,10 +36,11 @@ class MediaServices {
   }
 
   // 加载photo
-  Future loadAssets(AssetPathEntity selectedAlbum) async {
-    List<AssetEntity> assetList = await selectedAlbum.getAssetListRange(
+  Future loadAssets(AssetPathEntity assetPathEntity) async {
+    var a=await assetPathEntity.assetCountAsync;
+    List<AssetEntity> assetList = await assetPathEntity.getAssetListRange(
       start: 0,
-      end: await selectedAlbum.assetCountAsync,
+      end: await assetPathEntity.assetCountAsync,
     );
     return assetList;
   }
