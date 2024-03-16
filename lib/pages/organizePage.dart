@@ -45,7 +45,7 @@ class _OrganizePageState extends State<OrganizePage> {
         ),
         body: ListView(
           children: [
-            const ListTile(title: Text('未分类')),
+            // const ListTile(title: Text('未分类')),
             const ListTile(title: Text('相册')),
             ...albumList.map((e) =>
                 GestureDetector(

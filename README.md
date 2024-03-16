@@ -1,5 +1,4 @@
-# untitled2
+# SlidePhoto
 
-使用flutter仿照SlideBox-Photo Manager制作的照片管理工具
-
+使用flutter构建的通过手势分类图片的应用程序
 
