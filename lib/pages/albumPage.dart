@@ -15,7 +15,7 @@ class _AlbumPageState extends State<AlbumPage> {
 
   @override
   void initState() {
-    MediaServices().loadAlbums(RequestType.all).then(
+    MediaServices().loadAlbums(RequestType.image).then(
       (value) {
         setState(() {
           albumList = value;

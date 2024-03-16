@@ -21,7 +21,8 @@ class _DoingPageState extends State<DoingPage> {
   List<Map> _changeImage = [];
   List<AssetPathEntity> albumList = [];
   List<AssetEntity> assetList = [];
-  Set<AssetEntity> assetDeleteList = Set();
+
+  // Set<AssetEntity> assetDeleteList = Set();
   List<File> assetFileList = [];
   int _assetIndex = 0;
   Map albumSelectedMap = {};
@@ -30,7 +31,7 @@ class _DoingPageState extends State<DoingPage> {
 
   @override
   void initState() {
-    MediaServices().loadAlbums(RequestType.all).then(
+    MediaServices().loadAlbums(RequestType.image).then(
       (value) {
         setState(() {
           albumList = value;
@@ -48,6 +49,7 @@ class _DoingPageState extends State<DoingPage> {
     super.initState();
   }
 
+  //构建图片画廊
   _getImageFile() {
     return PhotoViewGallery(
       pageController: PageController(
@@ -67,6 +69,7 @@ class _DoingPageState extends State<DoingPage> {
     );
   }
 
+  //获取assetEntity的originFile
   _getImageString() {
     assetFileList.clear();
     if (assetList.length != assetFileList.length) {
@@ -78,11 +81,22 @@ class _DoingPageState extends State<DoingPage> {
     }
   }
 
-  _refresh() {
+// 还原上一步操作
+  _refresh() async {
     if (_changeImage.isEmpty) {
-      AlertDialog(
-        title: Text('aaa'),
-      );
+      await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+                title: Text('无法撤销'),
+                content: Text('您无法进一步撤销'),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('确定'))
+                ],
+              ));
     } else {
       setState(() {
         assetList.insert(_changeImage.last['index'], _changeImage.last['assetEntity']);
@@ -94,35 +108,77 @@ class _DoingPageState extends State<DoingPage> {
     }
   }
 
-  void showBottomSheet() {
-    //用于在底部打开弹框的效果
-    showModalBottomSheet(
-        builder: (BuildContext context) {
-          //构建弹框中的内容
-          return Container(
-            height: 260,
-            width: double.infinity,
-            child: Stack(
-              children: [
-                Positioned(top: 0, left: 0, child: Text('应用图片改变?')),
-                Positioned(
-                  child: Text('- 移动 ${_changeImage.length} 张图片'),
-                  top: 20,
-                  left: 0,
+  _moveAssetEntity() async {
+    // await requestPermission(Permission.manageExternalStorage);
+    List<String> assetDeleteList = [];
+    _changeImage.forEach((element) async {
+      List assetEntityList = await element['albumEntity'].getAssetListRange(start: 0, end: 1);
+      AssetEntity assetEntity = assetEntityList[0];
+      String? filepath = assetEntity.relativePath;
+      String newFilePath = '/storage/emulated/0/${filepath}${element['assetEntity'].title}';
+      String oldFilePath = element['file'].path;
+      print(newFilePath);
+      try {
+        final result = element['file'].copySync(newFilePath);
+        print(result);
+        File newFile = File(newFilePath);
+        if (newFile.existsSync()) {
+          assetDeleteList.add(element['assetEntity'].id);
+        }
+      } catch (e) {
+        print('--------------------------------------------------');
+        print(e);
+        print(oldFilePath);
+        print('新文件:${File(newFilePath).existsSync()}');
+        print('旧文件:${File(oldFilePath).existsSync()}');
+        // showDialog(
+        //     context: context,
+        //     builder: (_) => AlertDialog(
+        //           title: Text(
+        //             'error',
+        //             style: TextStyle(color: Colors.red),
+        //           ),
+        //           content: Text('文件移动错误,请检查权限'),
+        //           actions: [
+        //             TextButton(
+        //                 onPressed: () {
+        //                   Navigator.of(context).pop();
+        //                 },
+        //                 child: Text('确认'))
+        //           ],
+        //         ));
+      }
+    });
+    if (assetDeleteList.length > 0) {
+      final result = await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+                title: Text(
+                  '复制完成${assetDeleteList.length}个图片',
                 ),
-                Align(
-                  child: TextButton(
-                    onPressed: () {},
-                    child: Text('应用(${_changeImage.length})'),
-                    style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
-                  ),
-                  alignment: Alignment.bottomCenter,
-                )
-              ],
-            ),
-          );
-        },
-        context: context);
+                content: Text('是否删除原文件'),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      child: Text('取消')),
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(true);
+                      },
+                      child: Text('确认'))
+                ],
+              ));
+      if (result && assetDeleteList.length != 0) {
+        final res = PhotoManager.editor.deleteWithIds(assetDeleteList);
+        if (res != null) {
+          Navigator.of(context).pop(true);
+        }
+      }
+    }
+    Navigator.of(context).pop();
+    // Navigator.pushNamed(context, 'organize');
   }
 
   @override
@@ -205,6 +261,7 @@ class _DoingPageState extends State<DoingPage> {
                                 setState(() {
                                   _changeImage.add({
                                     'album': e.name,
+                                    'albumEntity': e,
                                     'assetEntity': assetList[_assetIndex],
                                     'index': _assetIndex,
                                     'file': assetFileList[_assetIndex],
@@ -255,14 +312,78 @@ class _DoingPageState extends State<DoingPage> {
           ),
           Row(
             children: [
-              Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('取消'))),
+              Expanded(
+                  flex: 1,
+                  child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('取消'))),
               _changeImage.isEmpty
                   ? const Expanded(flex: 3, child: TextButton(onPressed: null, child: Text('没有待定的图片')))
                   : Expanded(
                       flex: 3,
                       child: TextButton(
                           onPressed: () {
-                            showBottomSheet();
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (_) => SizedBox(
+                                height: 200,
+                                child: Scaffold(
+                                  appBar: AppBar(
+                                    title: Text(
+                                      '应用图片分类?',
+                                      style: TextStyle(fontSize: 25),
+                                    ),
+                                    actions: [
+                                      IconButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: Icon(Icons.close))
+                                    ],
+                                    automaticallyImplyLeading: false,
+                                  ),
+                                  body: Stack(
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.topLeft,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 15.0),
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                '系统会出现确认提醒',
+                                                style: TextStyle(fontSize: 15),
+                                              ),
+                                              SizedBox(
+                                                height: 20,
+                                              ),
+                                              Text('- 移动${_changeImage.length}张图片')
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.all(20),
+                                          child: TextButton(
+                                            onPressed: () {
+                                              _moveAssetEntity();
+                                            },
+                                            style: ButtonStyle(
+                                                backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
+                                            child: Text('应用(${_changeImage.length})'),
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
                           },
                           child: Text('${_changeImage.length}张图片'))),
               Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('完成'))),

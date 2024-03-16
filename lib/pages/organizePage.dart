@@ -15,21 +15,21 @@ class _OrganizePageState extends State<OrganizePage> {
 
   @override
   void initState() {
-    MediaServices().loadAlbums(RequestType.all).then(
-      (value) {
+    _getAlbum();
+    super.initState();
+  }
+
+  _getAlbum(){
+    MediaServices().loadAlbums(RequestType.image).then(
+          (value) {
         setState(() {
           albumList = value;
         });
         // load recent assets
       },
     );
-    super.initState();
   }
 
-  Future<int> _getAlbumCount(AssetPathEntity assetPathEntity) async {
-    int count = await assetPathEntity.assetCountAsync;
-    return count;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,23 +47,28 @@ class _OrganizePageState extends State<OrganizePage> {
           children: [
             const ListTile(title: Text('未分类')),
             const ListTile(title: Text('相册')),
-            ...albumList.map((e) => GestureDetector(
-              onTap: (){
-                // print(e);
-                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>DoingPage(assetPathEntity: e,)));
-              },
-              child: Container(
+            ...albumList.map((e) =>
+                GestureDetector(
+                  onTap: () async {
+                    // print(e);
+                    await Navigator.push(
+                        context, MaterialPageRoute(builder: (BuildContext context) => DoingPage(assetPathEntity: e,)));
+                    setState(() {
+                      _getAlbum();
+                    });
+                  },
+                  child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
                       border: Border.all(color: Colors.transparent),
                       color: Colors.grey[700],
                     ),
                     padding: const EdgeInsets.all(15),
-                    margin: const EdgeInsets.only(top: 10,left: 5,right: 5),
+                    margin: const EdgeInsets.only(top: 10, left: 5, right: 5),
                     child: Stack(children: [
                       Text(e.name),
                       FutureBuilder(
-                        future: _getAlbumCount(e),
+                        future: e.assetCountAsync,
                         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
                           if (!snapshot.hasData) {
                             return const CircularProgressIndicator();
@@ -80,7 +85,7 @@ class _OrganizePageState extends State<OrganizePage> {
                       )
                     ]),
                   ),
-            )),
+                )),
           ],
         ));
   }
