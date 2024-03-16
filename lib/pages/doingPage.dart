@@ -18,7 +18,7 @@ class DoingPage extends StatefulWidget {
 }
 
 class _DoingPageState extends State<DoingPage> {
-  List<AssetEntity> _changeImage = [];
+  List<Map> _changeImage = [];
   List<AssetPathEntity> albumList = [];
   List<AssetEntity> assetList = [];
   Set<AssetEntity> assetDeleteList = Set();
@@ -50,6 +50,9 @@ class _DoingPageState extends State<DoingPage> {
 
   _getImageFile() {
     return PhotoViewGallery(
+      pageController: PageController(
+        initialPage: _assetIndex,
+      ),
       pageOptions: assetFileList
           .map((e) => PhotoViewGalleryPageOptions(
                 imageProvider: FileImage(e),
@@ -75,6 +78,53 @@ class _DoingPageState extends State<DoingPage> {
     }
   }
 
+  _refresh() {
+    if (_changeImage.isEmpty) {
+      AlertDialog(
+        title: Text('aaa'),
+      );
+    } else {
+      setState(() {
+        assetList.insert(_changeImage.last['index'], _changeImage.last['assetEntity']);
+        assetFileList.insert(_changeImage.last['index'], _changeImage.last['file']);
+        _assetIndex = _changeImage.last['index'];
+        albumSelectedMap[_changeImage.last['album']].removeLast();
+        _changeImage.removeLast();
+      });
+    }
+  }
+
+  void showBottomSheet() {
+    //用于在底部打开弹框的效果
+    showModalBottomSheet(
+        builder: (BuildContext context) {
+          //构建弹框中的内容
+          return Container(
+            height: 260,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                Positioned(top: 0, left: 0, child: Text('应用图片改变?')),
+                Positioned(
+                  child: Text('- 移动 ${_changeImage.length} 张图片'),
+                  top: 20,
+                  left: 0,
+                ),
+                Align(
+                  child: TextButton(
+                    onPressed: () {},
+                    child: Text('应用(${_changeImage.length})'),
+                    style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
+                  ),
+                  alignment: Alignment.bottomCenter,
+                )
+              ],
+            ),
+          );
+        },
+        context: context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,7 +132,12 @@ class _DoingPageState extends State<DoingPage> {
         title: Column(
           children: [Text(widget.assetPathEntity.name), Text('${_assetIndex + 1}/${assetList.length}')],
         ),
-        leading: const Icon(Icons.refresh),
+        leading: IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () {
+            _refresh();
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -99,14 +154,16 @@ class _DoingPageState extends State<DoingPage> {
           Expanded(
             child: assetFileList.isEmpty
                 ? const Center(
-              child: CircularProgressIndicator(),
-            )
+                    child: CircularProgressIndicator(),
+                  )
                 : _getImageFile(),
           ),
           Container(
             height: 120,
             width: double.infinity,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(25), color: Colors.blue),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               // crossAxisAlignment: CrossAxisAlignment.center,
@@ -117,7 +174,7 @@ class _DoingPageState extends State<DoingPage> {
                       width: double.infinity,
                       decoration: const BoxDecoration(
                           borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
-                          color: Colors.grey),
+                          color: Colors.black26),
                       child: const Center(child: Text('移动到相册'))),
                 ),
                 Expanded(
@@ -125,20 +182,12 @@ class _DoingPageState extends State<DoingPage> {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        ...albumList.map((e) => ElevatedButton(
-                              onPressed: () {
-                                albumSelectedMap[e.name].add(assetList[_assetIndex]);
-                                assetList.remove(assetList[_assetIndex]);
-                                setState(() {
-                                  _getImageString();
-                                  if(assetList.isEmpty){
-                                    // TODO 显示全部分类完成,1.phsh,2.弹窗
-                                  }
-                                });
-                              },
+                        ...albumList.map((e) {
+                          if (e == widget.assetPathEntity) {
+                            return ElevatedButton(
+                              onPressed: null,
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
+                                  disabledBackgroundColor: Colors.transparent,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0)),
                               child: Column(
@@ -149,7 +198,56 @@ class _DoingPageState extends State<DoingPage> {
                                   Text(e.name),
                                 ],
                               ),
-                            ))
+                            );
+                          } else {
+                            return ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  _changeImage.add({
+                                    'album': e.name,
+                                    'assetEntity': assetList[_assetIndex],
+                                    'index': _assetIndex,
+                                    'file': assetFileList[_assetIndex],
+                                  });
+                                  albumSelectedMap[e.name].add(assetList[_assetIndex]);
+                                  assetList.removeAt(_assetIndex);
+                                  assetFileList.removeAt(_assetIndex);
+                                  if (assetList.length + 1 <= _assetIndex + 1) {
+                                    _assetIndex--;
+                                  }
+                                  // _getImageString();
+                                });
+                                if (assetList.isEmpty) {
+                                  await Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
+                                    return DonePage();
+                                  }));
+                                  _refresh();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+                                enableFeedback: false,
+                              ),
+                              child: Badge(
+                                smallSize: 0,
+                                label: albumSelectedMap[e.name].isEmpty
+                                    ? null
+                                    : Text('${albumSelectedMap[e.name].length}'),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.download),
+                                    Text(e.name),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        })
                       ],
                     ))
               ],
@@ -160,11 +258,70 @@ class _DoingPageState extends State<DoingPage> {
               Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('取消'))),
               _changeImage.isEmpty
                   ? const Expanded(flex: 3, child: TextButton(onPressed: null, child: Text('没有待定的图片')))
-                  : Expanded(flex: 3, child: TextButton(onPressed: () {}, child: Text('${_changeImage.length}张照片'))),
+                  : Expanded(
+                      flex: 3,
+                      child: TextButton(
+                          onPressed: () {
+                            showBottomSheet();
+                          },
+                          child: Text('${_changeImage.length}张图片'))),
               Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('完成'))),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class DonePage extends StatelessWidget {
+  const DonePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check,
+              size: 150,
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text(
+              '完成!',
+              style: TextStyle(fontSize: 30, height: 2, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text('是否要应用到你的相册'),
+            const SizedBox(
+              height: 20,
+            ),
+            ElevatedButton(
+              onPressed: () {},
+              style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
+              child: const Text(
+                '应用',
+                style: TextStyle(fontSize: 20),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

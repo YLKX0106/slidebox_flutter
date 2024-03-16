@@ -55,8 +55,8 @@ class _OrganizePageState extends State<OrganizePage> {
               child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.red),
-                      color: Colors.amber,
+                      border: Border.all(color: Colors.transparent),
+                      color: Colors.grey[700],
                     ),
                     padding: const EdgeInsets.all(15),
                     margin: const EdgeInsets.only(top: 10,left: 5,right: 5),
