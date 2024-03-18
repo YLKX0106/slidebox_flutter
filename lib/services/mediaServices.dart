@@ -1,31 +1,19 @@
 import 'dart:async';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class MediaServices {
-  void getPermission() async {
-    var permission = await PhotoManager.requestPermissionExtend();
-    if (!permission.isAuth) {
-      PhotoManager.openSetting();
-    }
-  }
 
   // 获取album
   Future loadAlbums(RequestType requestType) async {
-    // 请求权限
-    var permission = await PhotoManager.requestPermissionExtend();
     List<AssetPathEntity> albumList = [];
-    if (permission.isAuth == true) {
-      // 获取album
-      albumList = await PhotoManager.getAssetPathList(
-          type: requestType,
-          filterOption: CustomFilter.sql(
-              where: "${CustomColumns.base.mediaType} = 1 AND ${CustomColumns.android.relativePath} LIKE '%Pictures%'",
-              orderBy: [OrderByItem.desc(CustomColumns.base.createDate)]));
-    } else {
-      // PhotoManager.openSetting();
-      SmartDialog.showToast('请给予软件存储权限');
-    }
+    albumList = await PhotoManager.getAssetPathList(
+        type: requestType,
+        filterOption: CustomFilter.sql(
+            where: "${CustomColumns.base.mediaType} = 1 AND ${CustomColumns.android.relativePath} LIKE '%Pictures%'",
+            orderBy: [OrderByItem.desc(CustomColumns.base.createDate)]));
     return albumList;
   }
 
@@ -38,4 +26,24 @@ class MediaServices {
     );
     return assetList;
   }
+  // 请求权限
+  Future requestPermission() async {
+    final permission = await PhotoManager.requestPermissionExtend();
+    if (permission.isAuth==true){
+      final result=await Permission.manageExternalStorage.request();
+      if(result.isGranted){
+        // SmartDialog.showToast('已获取权限');
+        return true;
+      }
+      else{
+        // SmartDialog.showToast('请给予软件存储权限');
+        return false;
+      }
+    }else{
+      // SmartDialog.showToast('请给予软件存储权限');
+      return false;
+    }
+  }
+
+
 }

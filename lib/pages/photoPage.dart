@@ -26,12 +26,15 @@ class _MediaPickerState extends State<MediaPicker> {
   @override
   void initState() {
     // TODO: implement initState
-    MediaServices().loadAssets(widget.assetPathEntity).then((value) => setState(() {
-          assetList = value;
-        }));
+    _getAssetEntity();
     super.initState();
   }
 
+  _getAssetEntity(){
+    MediaServices().loadAssets(widget.assetPathEntity).then((value) => setState(() {
+      assetList = value;
+    }));
+  }
   // Future<int> getImageCount(AssetPathEntity path) async {
   //   int count = await path.assetCountAsync;
   //   return count;
@@ -69,8 +72,8 @@ class _MediaPickerState extends State<MediaPicker> {
   }
 
   Widget assetWidget(AssetEntity assetEntity) => GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (BuildContext context) => ImagePage(
@@ -79,6 +82,12 @@ class _MediaPickerState extends State<MediaPicker> {
                       assetEntityIndex: assetList.indexOf(assetEntity),
                       assetPathEntityCount: assetList.length,
                     )));
+        if (result) {
+          print('删除成功');
+          widget.assetPathEntity.obtainForNewProperties();
+          _getAssetEntity();
+          setState(() {});
+        }
       },
       child: AssetEntityImage(
         assetEntity,

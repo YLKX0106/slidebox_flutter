@@ -24,7 +24,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     // 请求权限
-    MediaServices().getPermission();
+    // MediaServices().getPermission();
     super.initState();
   }
 

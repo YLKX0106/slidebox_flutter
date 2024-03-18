@@ -109,73 +109,32 @@ class _DoingPageState extends State<DoingPage> {
   }
 
   _moveAssetEntity() async {
-    // await requestPermission(Permission.manageExternalStorage);
-    List<String> assetDeleteList = [];
+    List<File> _resultMoveList = [];
     _changeImage.forEach((element) async {
-      List assetEntityList = await element['albumEntity'].getAssetListRange(start: 0, end: 1);
-      AssetEntity assetEntity = assetEntityList[0];
-      String? filepath = assetEntity.relativePath;
-      String newFilePath = '/storage/emulated/0/${filepath}${element['assetEntity'].title}';
-      String oldFilePath = element['file'].path;
-      print(newFilePath);
-      try {
-        final result = element['file'].copySync(newFilePath);
-        // print(result);
-        File newFile = File(newFilePath);
-        if (await newFile.exists()) {
-          print('aa');
-          assetDeleteList.add(element['assetEntity'].id);
-        }
-      } catch (e) {
-        print(e);
-        showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-                  title: Text(
-                    'Error',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  content: Text('File copy operation failed. Please check permissions.'),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text('OK'))
-                  ],
-                ));
+      String newFilePath = '/storage/emulated/0/Pictures/${element['album']}/${element['assetEntity'].title}';
+      var result = await element['file'].rename(newFilePath);
+      // print(element['file'].copy(newFilePath));
+      print(result);
+      if (result != null) {
+        _resultMoveList.add(result);
       }
     });
-    if (assetDeleteList.length > 0) {
-      final result = await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-                title: Text(
-                  '复制完成${assetDeleteList.length}个图片',
-                ),
-                content: Text('是否删除原文件'),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(false);
-                      },
-                      child: Text('取消')),
-                  TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(true);
-                      },
-                      child: Text('确认'))
-                ],
-              ));
-      if (result && assetDeleteList.length != 0) {
-        final res = PhotoManager.editor.deleteWithIds(assetDeleteList);
-        if (res != null) {
-          Navigator.of(context).pop(true);
-        }
-      }
-    }
-    Navigator.of(context).pop();
-    // Navigator.pushNamed(context, 'organize');
+    await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('移动成功'),
+            content: Text('成功移动${_resultMoveList.length}张图片'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('确定'))
+            ],
+          );
+        });
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -199,97 +158,55 @@ class _DoingPageState extends State<DoingPage> {
         ],
         centerTitle: true,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Expanded(
-            child: assetFileList.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : _getImageFile(),
-          ),
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
+      body: WillPopScope(
+        onWillPop: () async {
+          return false;
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              child: assetFileList.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : _getImageFile(),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              // crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
-                          color: Colors.black26),
-                      child: const Center(child: Text('移动到相册'))),
-                ),
-                Expanded(
-                    flex: 4,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        ...albumList.map((e) {
-                          if (e == widget.assetPathEntity) {
-                            return ElevatedButton(
-                              onPressed: null,
-                              style: ElevatedButton.styleFrom(
-                                  disabledBackgroundColor: Colors.transparent,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0)),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.download),
-                                  Text(e.name),
-                                ],
-                              ),
-                            );
-                          } else {
-                            return ElevatedButton(
-                              onPressed: () async {
-                                setState(() {
-                                  _changeImage.add({
-                                    'album': e.name,
-                                    'albumEntity': e,
-                                    'assetEntity': assetList[_assetIndex],
-                                    'index': _assetIndex,
-                                    'file': assetFileList[_assetIndex],
-                                  });
-                                  albumSelectedMap[e.name].add(assetList[_assetIndex]);
-                                  assetList.removeAt(_assetIndex);
-                                  assetFileList.removeAt(_assetIndex);
-                                  if (assetList.length + 1 <= _assetIndex + 1) {
-                                    _assetIndex--;
-                                  }
-                                  // _getImageString();
-                                });
-                                if (assetList.isEmpty) {
-                                  await Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
-                                    return DonePage();
-                                  }));
-                                  _refresh();
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
-                                enableFeedback: false,
-                              ),
-                              child: Badge(
-                                smallSize: 0,
-                                label: albumSelectedMap[e.name].isEmpty
-                                    ? null
-                                    : Text('${albumSelectedMap[e.name].length}'),
+            Container(
+              height: 120,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                // crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                            borderRadius:
+                                BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+                            color: Colors.black26),
+                        child: const Center(child: Text('移动到相册'))),
+                  ),
+                  Expanded(
+                      flex: 4,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ...albumList.map((e) {
+                            if (e == widget.assetPathEntity) {
+                              return ElevatedButton(
+                                onPressed: null,
+                                style: ElevatedButton.styleFrom(
+                                    disabledBackgroundColor: Colors.transparent,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0)),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -298,95 +215,147 @@ class _DoingPageState extends State<DoingPage> {
                                     Text(e.name),
                                   ],
                                 ),
-                              ),
-                            );
-                          }
-                        })
-                      ],
-                    ))
-              ],
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                  flex: 1,
-                  child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('取消'))),
-              _changeImage.isEmpty
-                  ? const Expanded(flex: 3, child: TextButton(onPressed: null, child: Text('没有待定的图片')))
-                  : Expanded(
-                      flex: 3,
-                      child: TextButton(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (_) => SizedBox(
-                                height: 200,
-                                child: Scaffold(
-                                  appBar: AppBar(
-                                    title: Text(
-                                      '应用图片分类?',
-                                      style: TextStyle(fontSize: 25),
-                                    ),
-                                    actions: [
-                                      IconButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          icon: Icon(Icons.close))
-                                    ],
-                                    automaticallyImplyLeading: false,
-                                  ),
-                                  body: Stack(
+                              );
+                            } else {
+                              return ElevatedButton(
+                                onPressed: () async {
+                                  setState(() {
+                                    _changeImage.add({
+                                      'album': e.name,
+                                      'albumEntity': e,
+                                      'assetEntity': assetList[_assetIndex],
+                                      'index': _assetIndex,
+                                      'file': assetFileList[_assetIndex],
+                                    });
+                                    albumSelectedMap[e.name].add(assetList[_assetIndex]);
+                                    assetList.removeAt(_assetIndex);
+                                    assetFileList.removeAt(_assetIndex);
+                                    if (assetList.length + 1 <= _assetIndex + 1) {
+                                      _assetIndex--;
+                                    }
+                                    // _getImageString();
+                                  });
+                                  if (assetList.isEmpty) {
+                                    await Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
+                                      return DonePage();
+                                    }));
+                                    _refresh();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+                                  enableFeedback: false,
+                                ),
+                                child: Badge(
+                                  smallSize: 0,
+                                  label: albumSelectedMap[e.name].isEmpty
+                                      ? null
+                                      : Text('${albumSelectedMap[e.name].length}'),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Align(
-                                        alignment: Alignment.topLeft,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 15.0),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                '系统会出现确认提醒',
-                                                style: TextStyle(fontSize: 15),
-                                              ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              Text('- 移动${_changeImage.length}张图片')
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Align(
-                                        alignment: Alignment.bottomCenter,
-                                        child: Container(
-                                          width: double.infinity,
-                                          margin: const EdgeInsets.all(20),
-                                          child: TextButton(
-                                            onPressed: () {
-                                              _moveAssetEntity();
-                                            },
-                                            style: ButtonStyle(
-                                                backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
-                                            child: Text('应用(${_changeImage.length})'),
-                                          ),
-                                        ),
-                                      )
+                                      const Icon(Icons.download),
+                                      Text(e.name),
                                     ],
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: Text('${_changeImage.length}张图片'))),
-              Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('完成'))),
-            ],
-          ),
-        ],
+                              );
+                            }
+                          })
+                        ],
+                      ))
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                    flex: 1,
+                    child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('取消'))),
+                _changeImage.isEmpty
+                    ? const Expanded(flex: 3, child: TextButton(onPressed: null, child: Text('没有待定的图片')))
+                    : Expanded(
+                        flex: 3,
+                        child: TextButton(
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                builder: (_) => SizedBox(
+                                  height: 200,
+                                  child: Scaffold(
+                                    appBar: AppBar(
+                                      title: Text(
+                                        '应用图片分类?',
+                                        style: TextStyle(fontSize: 25),
+                                      ),
+                                      actions: [
+                                        IconButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            icon: Icon(Icons.close))
+                                      ],
+                                      automaticallyImplyLeading: false,
+                                    ),
+                                    body: Stack(
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 15.0),
+                                            child: Column(
+                                              children: [
+                                                Text(
+                                                  '系统会出现确认提醒',
+                                                  style: TextStyle(fontSize: 15),
+                                                ),
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                Text('- 移动${_changeImage.length}张图片')
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.bottomCenter,
+                                          child: Container(
+                                            width: double.infinity,
+                                            margin: const EdgeInsets.all(20),
+                                            child: TextButton(
+                                              onPressed: ()async {
+                                                final result=await _moveAssetEntity();
+                                                if(result){
+                                                  Navigator.of(context).pop();
+                                                }
+
+                                              },
+                                              style: ButtonStyle(
+                                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.white12)),
+                                              child: Text('应用(${_changeImage.length})'),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text('${_changeImage.length}张图片'))),
+                Expanded(flex: 1, child: TextButton(onPressed: () {}, child: const Text('完成'))),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class ImagePage extends StatefulWidget {
   final String albumName;
@@ -55,7 +56,10 @@ class _ImagePageState extends State<ImagePage> {
           IconButton(
             icon: const Icon(Icons.share),
             color: Colors.white,
-            onPressed: () {},
+            onPressed: () {
+              // TODO 分享功能
+              SmartDialog.showToast('功能开发中');
+            },
           )
         ],
       ),
@@ -92,7 +96,8 @@ class _ImagePageState extends State<ImagePage> {
                         child: TextButton(
                             onPressed: () {},
                             child: const Text(
-                              '移动',
+                              // '移动',
+                              '',
                               style: TextStyle(fontSize: 15),
                             ))),
                     Align(
@@ -100,11 +105,10 @@ class _ImagePageState extends State<ImagePage> {
                         child: TextButton(
                             onPressed: () async{
                               // TODO 检测是否删除,重载页面
-                              // var result=PhotoManager.editor.deleteWithIds([widget.assetEntity.id]);
-                              // if(await widget.assetEntity.exists){
-                              //   print('object');
-                              // }
-                              //
+                              final result= await PhotoManager.editor.deleteWithIds([widget.assetEntity.id]);
+                              if(!result.isEmpty){
+                                Navigator.of(context).pop(true);
+                              }
                             },
                             child: const Text('删除', style: TextStyle(fontSize: 15)))),
                   ],

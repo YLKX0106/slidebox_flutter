@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import '../services/mediaServices.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -16,21 +18,11 @@ class _AboutPageState extends State<AboutPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Color outline = Theme
-        .of(context)
-        .colorScheme
-        .outline;
-    TextStyle subTitleStyle =
-    TextStyle(fontSize: 13, color: Theme
-        .of(context)
-        .colorScheme
-        .outline);
+    final Color outline = Theme.of(context).colorScheme.outline;
+    TextStyle subTitleStyle = TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outline);
     return Scaffold(
       appBar: AppBar(
-        title: Text('关于', style: Theme
-            .of(context)
-            .textTheme
-            .titleMedium),
+        title: Text('关于', style: Theme.of(context).textTheme.titleMedium),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -41,10 +33,7 @@ class _AboutPageState extends State<AboutPage> {
             ),
             Text(
               'SidePhoto',
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .titleMedium,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             ListTile(
@@ -65,27 +54,24 @@ class _AboutPageState extends State<AboutPage> {
               ),
             ),
             ListTile(
-              onTap: ()async{
-                final permission = await PhotoManager.requestPermissionExtend();
-                if (permission.isAuth==true){
-                  SmartDialog.showToast('已获取权限');
-                }else{
-                  SmartDialog.showToast('请给予软件存储权限');
-                }
+              onTap: () async {
+                await MediaServices().requestPermission();
               },
               title: const Text('获取权限'),
             ),
-            SizedBox(height: MediaQuery
-                .of(context)
-                .padding
-                .bottom + 20)
+            ListTile(
+              onTap:(){
+                PhotoManager.editor.android.removeAllNoExistsAsset();
+              },
+              title: Text('清楚缓存'),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 20)
           ],
         ),
       ),
     );
   }
 }
-
 
 class AboutController extends GetxController {
   // 跳转github

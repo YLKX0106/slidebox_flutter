@@ -15,6 +15,11 @@ class _AlbumPageState extends State<AlbumPage> {
 
   @override
   void initState() {
+    _getInit();
+    super.initState();
+  }
+
+  _getInit() {
     MediaServices().loadAlbums(RequestType.image).then(
       (value) {
         setState(() {
@@ -24,7 +29,6 @@ class _AlbumPageState extends State<AlbumPage> {
         // load recent assets
       },
     );
-    super.initState();
   }
 
   Future<int> _getAlbumCount(AssetPathEntity assetPathEntity) async {
@@ -40,40 +44,41 @@ class _AlbumPageState extends State<AlbumPage> {
           'ALBUM',
           style: TextStyle(fontSize: 20, letterSpacing: 2),
         ),
-        actions: [
-          IconButton(
-              onPressed: () {
-                showModalBottomSheet<void>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          const ListTile(
-                            title: Text('创建新相册'),
-                            subtitle: Text(
-                              '在安卓系统值创建一个新相册',
-                              // style: TextStyle(color: Colors.black26),
-                            ),
-                          ),
-                          ListTile(
-                            title: Text(
-                              '取消',
-                              // style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                          )
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              icon: const Icon(Icons.add)),
-        ],
+        // TODO 新建相册
+        // actions: [
+        //   IconButton(
+        //       onPressed: () {
+        //         showModalBottomSheet<void>(
+        //           context: context,
+        //           builder: (BuildContext context) {
+        //             return SingleChildScrollView(
+        //               child: Column(
+        //                 mainAxisAlignment: MainAxisAlignment.end,
+        //                 children: [
+        //                   const ListTile(
+        //                     title: Text('创建新相册'),
+        //                     subtitle: Text(
+        //                       '在安卓系统值创建一个新相册',
+        //                       // style: TextStyle(color: Colors.black26),
+        //                     ),
+        //                   ),
+        //                   ListTile(
+        //                     title: Text(
+        //                       '取消',
+        //                       // style: TextStyle(color: Colors.grey[600]),
+        //                     ),
+        //                     onTap: () {
+        //                       Navigator.pop(context);
+        //                     },
+        //                   )
+        //                 ],
+        //               ),
+        //             );
+        //           },
+        //         );
+        //       },
+        //       icon: const Icon(Icons.add)),
+        // ],
         centerTitle: true,
       ),
       body: Center(
@@ -100,12 +105,15 @@ class _AlbumPageState extends State<AlbumPage> {
                                   }
                                 },
                               ),
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (BuildContext context) =>
                                             MediaPicker(assetPathEntity: assetPathEntity)));
+                                setState(() {
+                                  _getInit();
+                                });
                               }),
                         ),
                       )

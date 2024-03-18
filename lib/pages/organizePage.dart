@@ -13,11 +13,23 @@ class OrganizePage extends StatefulWidget {
 
 class _OrganizePageState extends State<OrganizePage> {
   List<AssetPathEntity> albumList = [];
+  bool isPermission=false;
 
   @override
   void initState() {
+    if (isPermission == false) {
+      _getisPermission();
+    }
     _getAlbum();
     super.initState();
+  }
+
+  _getisPermission() async {
+    final result = await MediaServices().requestPermission();
+    isPermission = result;
+    if (result == false) {
+      SmartDialog.showToast('请给予软件存储权限');
+    }
   }
 
   _getAlbum() {
@@ -32,15 +44,10 @@ class _OrganizePageState extends State<OrganizePage> {
     );
   }
 
-  void _show() {
-    SmartDialog.showToast(
-      'test toast',
-      displayType: SmartToastType.onlyRefresh,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    _getAlbum();
     return Scaffold(
         appBar: AppBar(
           title: const Text(
