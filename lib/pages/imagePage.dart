@@ -23,7 +23,6 @@ class ImagePage extends StatefulWidget {
 class _ImagePageState extends State<ImagePage> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'doingPage.dart';
 import '../services/mediaServices.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class OrganizePage extends StatefulWidget {
   const OrganizePage({super.key});
@@ -19,17 +20,24 @@ class _OrganizePageState extends State<OrganizePage> {
     super.initState();
   }
 
-  _getAlbum(){
+  _getAlbum() {
     MediaServices().loadAlbums(RequestType.image).then(
-          (value) {
+      (value) {
         setState(() {
           albumList = value;
+          albumList.removeAt(0);
         });
         // load recent assets
       },
     );
   }
 
+  void _show() {
+    SmartDialog.showToast(
+      'test toast',
+      displayType: SmartToastType.onlyRefresh,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +55,15 @@ class _OrganizePageState extends State<OrganizePage> {
           children: [
             // const ListTile(title: Text('未分类')),
             const ListTile(title: Text('相册')),
-            ...albumList.map((e) =>
-                GestureDetector(
+            ...albumList.map((e) => GestureDetector(
                   onTap: () async {
                     // print(e);
                     await Navigator.push(
-                        context, MaterialPageRoute(builder: (BuildContext context) => DoingPage(assetPathEntity: e,)));
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) => DoingPage(
+                                  assetPathEntity: e,
+                                )));
                     setState(() {
                       _getAlbum();
                     });

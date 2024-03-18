@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class MediaServices {
@@ -18,26 +18,20 @@ class MediaServices {
     if (permission.isAuth == true) {
       // 获取album
       albumList = await PhotoManager.getAssetPathList(
-        type: requestType,
-        // TODO 注意筛选器
-        filterOption: AdvancedCustomFilter(
-          orderBy: [
-            OrderByItem.named(
-              column: CustomColumns.base.createDate,
-              isAsc: false,
-            ),
-          ],
-        ),
-      );
+          type: requestType,
+          filterOption: CustomFilter.sql(
+              where: "${CustomColumns.base.mediaType} = 1 AND ${CustomColumns.android.relativePath} LIKE '%Pictures%'",
+              orderBy: [OrderByItem.desc(CustomColumns.base.createDate)]));
     } else {
-      PhotoManager.openSetting();
+      // PhotoManager.openSetting();
+      SmartDialog.showToast('请给予软件存储权限');
     }
     return albumList;
   }
 
   // 加载photo
   Future loadAssets(AssetPathEntity assetPathEntity) async {
-    var a=await assetPathEntity.assetCountAsync;
+    var a = await assetPathEntity.assetCountAsync;
     List<AssetEntity> assetList = await assetPathEntity.getAssetListRange(
       start: 0,
       end: await assetPathEntity.assetCountAsync,

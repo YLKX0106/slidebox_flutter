@@ -120,33 +120,30 @@ class _DoingPageState extends State<DoingPage> {
       print(newFilePath);
       try {
         final result = element['file'].copySync(newFilePath);
-        print(result);
+        // print(result);
         File newFile = File(newFilePath);
-        if (newFile.existsSync()) {
+        if (await newFile.exists()) {
+          print('aa');
           assetDeleteList.add(element['assetEntity'].id);
         }
       } catch (e) {
-        print('--------------------------------------------------');
         print(e);
-        print(oldFilePath);
-        print('新文件:${File(newFilePath).existsSync()}');
-        print('旧文件:${File(oldFilePath).existsSync()}');
-        // showDialog(
-        //     context: context,
-        //     builder: (_) => AlertDialog(
-        //           title: Text(
-        //             'error',
-        //             style: TextStyle(color: Colors.red),
-        //           ),
-        //           content: Text('文件移动错误,请检查权限'),
-        //           actions: [
-        //             TextButton(
-        //                 onPressed: () {
-        //                   Navigator.of(context).pop();
-        //                 },
-        //                 child: Text('确认'))
-        //           ],
-        //         ));
+        showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                  title: Text(
+                    'Error',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  content: Text('File copy operation failed. Please check permissions.'),
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('OK'))
+                  ],
+                ));
       }
     });
     if (assetDeleteList.length > 0) {

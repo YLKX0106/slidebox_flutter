@@ -23,7 +23,6 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    // TODO: implement initState
     // 请求权限
     MediaServices().getPermission();
     super.initState();

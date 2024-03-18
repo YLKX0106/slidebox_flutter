@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -61,6 +63,17 @@ class _AboutPageState extends State<AboutPage> {
                 size: 16,
                 color: outline,
               ),
+            ),
+            ListTile(
+              onTap: ()async{
+                final permission = await PhotoManager.requestPermissionExtend();
+                if (permission.isAuth==true){
+                  SmartDialog.showToast('已获取权限');
+                }else{
+                  SmartDialog.showToast('请给予软件存储权限');
+                }
+              },
+              title: const Text('获取权限'),
             ),
             SizedBox(height: MediaQuery
                 .of(context)

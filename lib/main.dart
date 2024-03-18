@@ -6,6 +6,7 @@ import 'pages/doingPage.dart';
 import 'pages/imagePage.dart';
 import 'pages/organizePage.dart';
 import 'pages/photoPage.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 main() {
   runApp(MyApp());
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData.dark(),
       home: Home(),
+      builder: FlutterSmartDialog.init(),
       // initialRoute: '/',
       // routes: {
       //   '/':(context)=> Home(),

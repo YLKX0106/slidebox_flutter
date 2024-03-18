@@ -19,6 +19,7 @@ class _AlbumPageState extends State<AlbumPage> {
       (value) {
         setState(() {
           albumList = value;
+          albumList.removeAt(0);
         });
         // load recent assets
       },
